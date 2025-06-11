@@ -11,16 +11,26 @@ def fetch_data_from_urls(urls, css_selector):
     """
     extracted_data = []
     for url in urls:
+        print(f"Requesting URL: {url}")
         try:
             response = requests.get(url)
+            print(f"Status code: {response.status_code}")
+            if response.status_code == 200:
+                print(f"Page loaded successfully. Content length: {len(response.text)}")
+            else:
+                print(f"Warning: Received status code {response.status_code}")
             response.raise_for_status()  # Raise an error for bad status codes
             soup = BeautifulSoup(response.text, 'html.parser')
             elements = soup.select(css_selector)
+            print(f"Found {len(elements)} elements with selector '{css_selector}'")
             if len(elements) >= 2:
+                print(f"Second element text: {elements[1].text.strip()}")
                 extracted_data.append((url, elements[1].text.strip()))
             else:
+                print("Second book not found on this page.")
                 extracted_data.append((url, "Second book not found"))
         except Exception as e:
+            print(f"Error occurred while processing {url}: {str(e)}")
             extracted_data.append((url, f"Error: {str(e)}"))
     return extracted_data
 
