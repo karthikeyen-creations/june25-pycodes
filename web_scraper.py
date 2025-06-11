@@ -15,11 +15,11 @@ def fetch_data_from_urls(urls, css_selector):
             response = requests.get(url)
             response.raise_for_status()  # Raise an error for bad status codes
             soup = BeautifulSoup(response.text, 'html.parser')
-            element = soup.select_one(css_selector)
-            if element:
-                extracted_data.append((url, element.text.strip()))
+            elements = soup.select(css_selector)
+            if len(elements) >= 2:
+                extracted_data.append((url, elements[1].text.strip()))
             else:
-                extracted_data.append((url, "No data found at the specified position"))
+                extracted_data.append((url, "Second book not found"))
         except Exception as e:
             extracted_data.append((url, f"Error: {str(e)}"))
     return extracted_data
