@@ -60,12 +60,12 @@ def fetch_data_from_urls(urls, css_selector):
 
             elements = soup.select(css_selector)
             print(f"Found {len(elements)} elements with selector '{css_selector}'")
-            if len(elements) >= 2:
-                print(f"Second element text: {elements[1].text.strip()}")
-                extracted_data.append((url, elements[1].text.strip()))
+            if elements:
+                print(f"First element text: {elements[0].text.strip()}")
+                extracted_data.append((url, elements[0].text.strip()))
             else:
-                print("Second book not found on this page.")
-                extracted_data.append((url, "Second book not found"))
+                print("No element found on this page.")
+                extracted_data.append((url, "No data found at the specified position"))
         except Exception as e:
             print(f"Error occurred while processing {url}: {str(e)}")
             extracted_data.append((url, f"Error: {str(e)}"))
