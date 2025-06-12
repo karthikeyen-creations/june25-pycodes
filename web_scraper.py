@@ -93,4 +93,9 @@ if __name__ == "__main__":
         writer.writerow(['pgm', 'url', 'res1', 'res2', 'res3'])
         for entry, (url, data1, data2, data3) in zip(url_entries, results):
             writer.writerow([entry['pgm'], url, data1, data2, data3])
+            print(f"pgm: {entry['pgm']}")
+            print(f"url: {url}")
+            print(f"res1: {data1}")
+            print(f"res2: {data2}")
+            print(f"res3: {data3}\n")
     print(f"Results saved to {csv_file}")
