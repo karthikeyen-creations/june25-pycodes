@@ -39,10 +39,14 @@ def fetch_data_from_urls(urls, css_selector):
             soup = BeautifulSoup(html, 'html.parser')
 
             results = []
+
             for idx, selector in enumerate(selectors):
                 elements = soup.select(selector)
                 if elements:
                     data = elements[0].text.strip()
+                    # Convert multiline to single line with ' | '
+                    if '\n' in data:
+                        data = ' | '.join(line.strip() for line in data.splitlines() if line.strip())
                 else:
                     data = f"No data found for selector {idx+1}"
                 log_lines.append(f"{selector} result: {data}")
