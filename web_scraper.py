@@ -54,10 +54,10 @@ def fetch_data_from_urls(urls, css_selector):
                 log_lines.append(f"{selector} result: {data}")
                 results.append(data)
 
-            # Pad results to always have 3 columns
-            while len(results) < 3:
+            # Pad results to always have 4 columns
+            while len(results) < 4:
                 results.append("")
-            extracted_data.append((url, results[0], results[1], results[2]))
+            extracted_data.append((url, results[0], results[1], results[2], results[3]))
         except Exception as e:
             log_lines.append(f"Error occurred while processing {url}: {str(e)}")
             extracted_data.append((url, f"Error: {str(e)}", "", ""))
@@ -101,12 +101,13 @@ if __name__ == "__main__":
     csv_file = os.path.join(outs_dir, f'results_{timestamp}.csv')
     with open(csv_file, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
-        writer.writerow(['pgm', 'url', 'res1', 'res2', 'res3'])
-        for entry, (url, data1, data2, data3) in zip(url_entries, results):
-            writer.writerow([entry['pgm'], url, data1, data2, data3])
+        writer.writerow(['pgm', 'url', 'res1', 'res2', 'res3', 'res4'])
+        for entry, (url, data1, data2, data3, data4) in zip(url_entries, results):
+            writer.writerow([entry['pgm'], url, data1, data2, data3, data4])
             print(f"pgm: {entry['pgm']}")
             print(f"url: {url}")
             print(f"res1: {data1}")
             print(f"res2: {data2}")
-            print(f"res3: {data3}\n")
+            print(f"res3: {data3}")
+            print(f"res4: {data4}\n")
     print(f"Results saved to {csv_file}")
