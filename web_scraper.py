@@ -44,6 +44,8 @@ def fetch_data_from_urls(urls, css_selector):
                 elements = soup.select(selector)
                 if elements:
                     data = elements[0].text.strip()
+                    # Replace non-breaking space (U+00a0) with ' | '
+                    data = data.replace('\u00a0', ' | ')
                     # Convert multiline to single line with ' | '
                     if '\n' in data:
                         data = ' | '.join(line.strip() for line in data.splitlines() if line.strip())
