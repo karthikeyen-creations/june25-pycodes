@@ -19,6 +19,15 @@ def fetch_data_from_urls(urls, css_selector):
     service = Service(chromedriver_path)
     driver = webdriver.Chrome(service=service)
 
+    import csv
+    # Read selectors from Files/selectors.csv
+    selectors_file = os.path.join(os.path.dirname(__file__), 'Files', 'selectors.csv')
+    selectors = []
+    with open(selectors_file, 'r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            selectors.append(row['selector'])
+
     log_lines = []
     for url in urls:
         log_lines.append(f"Requesting URL (with JS rendering): {url}")
@@ -29,24 +38,20 @@ def fetch_data_from_urls(urls, css_selector):
             log_lines.append(f"Page loaded. Content length: {len(html)}")
             soup = BeautifulSoup(html, 'html.parser')
 
-            # Extract data for 3 different selectors
-            css_selector1 = "h3 a"  # Example: book title links
-            css_selector2 = "p.price_color"  # Example: price
-            css_selector3 = "p.instock.availability"  # Example: availability
+            results = []
+            for idx, selector in enumerate(selectors):
+                elements = soup.select(selector)
+                if elements:
+                    data = elements[0].text.strip()
+                else:
+                    data = f"No data found for selector {idx+1}"
+                log_lines.append(f"{selector} result: {data}")
+                results.append(data)
 
-            elements1 = soup.select(css_selector1)
-            elements2 = soup.select(css_selector2)
-            elements3 = soup.select(css_selector3)
-
-            data1 = elements1[0].text.strip() if elements1 else "No data found for selector 1"
-            data2 = elements2[0].text.strip() if elements2 else "No data found for selector 2"
-            data3 = elements3[0].text.strip() if elements3 else "No data found for selector 3"
-
-            log_lines.append(f"css_selector1 ('{css_selector1}') result: {data1}")
-            log_lines.append(f"css_selector2 ('{css_selector2}') result: {data2}")
-            log_lines.append(f"css_selector3 ('{css_selector3}') result: {data3}")
-
-            extracted_data.append((url, data1, data2, data3))
+            # Pad results to always have 3 columns
+            while len(results) < 3:
+                results.append("")
+            extracted_data.append((url, results[0], results[1], results[2]))
         except Exception as e:
             log_lines.append(f"Error occurred while processing {url}: {str(e)}")
             extracted_data.append((url, f"Error: {str(e)}", "", ""))
