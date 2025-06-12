@@ -1,7 +1,10 @@
-import requests
-from bs4 import BeautifulSoup
 import os
 from datetime import datetime
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+import time
 
 def fetch_data_from_urls(urls, css_selector):
     """
@@ -12,17 +15,19 @@ def fetch_data_from_urls(urls, css_selector):
     :return: List of extracted data.
     """
     extracted_data = []
+    # Path to your chromedriver (update if needed)
+    chromedriver_path = 'chromedriver/chromedriver.exe'  # Assumes chromedriver is in PATH or current directory
+    service = Service(chromedriver_path)
+    driver = webdriver.Chrome(service=service)
+
     for url in urls:
-        print(f"Requesting URL: {url}")
+        print(f"Requesting URL (with JS rendering): {url}")
         try:
-            response = requests.get(url)
-            print(f"Status code: {response.status_code}")
-            if response.status_code == 200:
-                print(f"Page loaded successfully. Content length: {len(response.text)}")
-            else:
-                print(f"Warning: Received status code {response.status_code}")
-            response.raise_for_status()  # Raise an error for bad status codes
-            soup = BeautifulSoup(response.text, 'html.parser')
+            driver.get(url)
+            time.sleep(3)  # Wait for JavaScript to load content; adjust as needed
+            html = driver.page_source
+            print(f"Page loaded. Content length: {len(html)}")
+            soup = BeautifulSoup(html, 'html.parser')
 
             # Collect all selectors (tag, class, id) from the response
             selectors = set()
@@ -69,6 +74,8 @@ def fetch_data_from_urls(urls, css_selector):
         except Exception as e:
             print(f"Error occurred while processing {url}: {str(e)}")
             extracted_data.append((url, f"Error: {str(e)}"))
+
+    driver.quit()
     return extracted_data
 
 if __name__ == "__main__":
@@ -79,7 +86,7 @@ if __name__ == "__main__":
     ]
 
     # CSS selector for the desired position (update as needed)
-    css_selector = "article.product_pod h3 a"  # Selector for the first book's name
+    css_selector = "#default div div div div form"  # Example selector; update as needed
 
     # Fetch and display data
     results = fetch_data_from_urls(urls, css_selector)
