@@ -1,3 +1,5 @@
 /logs
 /chromedriver
 /env
+/Files
+env/*
