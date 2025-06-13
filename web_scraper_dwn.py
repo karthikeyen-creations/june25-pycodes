@@ -35,11 +35,14 @@ def fetch_data_from_urls(urls, css_selector, out_dir=None):
     selectors_file = os.path.join(os.path.dirname(__file__), 'Files', 'selectors.csv')
     selectors = []
     button_selector = None
+    iframe_selector = None
     with open(selectors_file, 'r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
             if row['selector_name'] == 'button_selector':
                 button_selector = row['selector']
+            elif row['selector_name'] == 'iframe_selector':
+                iframe_selector = row['selector']
             else:
                 selectors.append(row['selector'])
 
@@ -49,6 +52,15 @@ def fetch_data_from_urls(urls, css_selector, out_dir=None):
         try:
             driver.get(url)
             time.sleep(3)  # Wait for JavaScript to load content; adjust as needed
+            # Switch to iframe if iframe_selector is provided
+            if iframe_selector:
+                try:
+                    iframe_elem = driver.find_element(By.CSS_SELECTOR, iframe_selector)
+                    driver.switch_to.frame(iframe_elem)
+                    log_lines.append(f"Switched to iframe using selector: {iframe_selector}")
+                except Exception as iframe_e:
+                    log_lines.append(f"Could not switch to iframe with selector '{iframe_selector}': {iframe_e}")
+
             # Try to click the 'Add to basket' button if present, using button_selector from selectors.csv
             if button_selector:
                 try:
@@ -85,7 +97,7 @@ def fetch_data_from_urls(urls, css_selector, out_dir=None):
                     for cls in tag.get('class'):
                         found_selectors.add(f'.{cls}')
                 if tag.get('id'):
-                    found_selectors.add(f'#{tag.get('id')}')
+                    found_selectors.add(f"#{tag.get('id')}")
             log_lines.append(f"Selectors available before clicking: {sorted(found_selectors)}")
 
             results = []
@@ -111,6 +123,14 @@ def fetch_data_from_urls(urls, css_selector, out_dir=None):
         except Exception as e:
             log_lines.append(f"Error occurred while processing {url}: {str(e)}")
             extracted_data.append((url, f"Error: {str(e)}", "", ""))
+
+        # After button click and extraction, switch back to default content
+        if iframe_selector:
+            try:
+                driver.switch_to.default_content()
+                log_lines.append("Switched back to default content after iframe actions.")
+            except Exception as e:
+                log_lines.append(f"Error switching back to default content: {e}")
 
     driver.quit()
 
