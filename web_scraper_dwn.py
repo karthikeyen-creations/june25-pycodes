@@ -5,6 +5,8 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 import time
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 def fetch_data_from_urls(urls, css_selector, out_dir=None):
     """
@@ -50,9 +52,12 @@ def fetch_data_from_urls(urls, css_selector, out_dir=None):
             # Try to click the 'Add to basket' button if present, using button_selector from selectors.csv
             if button_selector:
                 try:
-                    add_btn = driver.find_element(By.CSS_SELECTOR, button_selector)
-                    add_btn.click()
-                    log_lines.append(f"Clicked 'Add to basket' button using selector: {button_selector}")
+                    # Wait for the button to be clickable
+                    csv_btn = WebDriverWait(driver, 10).until(
+                        EC.element_to_be_clickable((By.CSS_SELECTOR, button_selector))
+                    )
+                    csv_btn.click()
+                    log_lines.append(f"Clicked button using selector: {button_selector}")
                     # Wait for possible download
                     time.sleep(3)
                     # Check for new files in the download directory
@@ -63,7 +68,7 @@ def fetch_data_from_urls(urls, css_selector, out_dir=None):
                         else:
                             log_lines.append("No files detected in download folder after clicking.")
                 except Exception as click_e:
-                    log_lines.append(f"'Add to basket' button not found or not clickable with selector '{button_selector}': {click_e}")
+                    log_lines.append(f"Button not found or not clickable with selector '{button_selector}': {click_e}")
             else:
                 log_lines.append("No button_selector found in selectors.csv.")
 
