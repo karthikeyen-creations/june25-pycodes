@@ -76,6 +76,18 @@ def fetch_data_from_urls(urls, css_selector, out_dir=None):
             log_lines.append(f"Page loaded. Content length: {len(html)}")
             soup = BeautifulSoup(html, 'html.parser')
 
+            # Log all selectors available on the page before clicking the button
+            found_selectors = set()
+            for tag in soup.find_all(True):
+                if tag.name:
+                    found_selectors.add(tag.name)
+                if tag.get('class'):
+                    for cls in tag.get('class'):
+                        found_selectors.add(f'.{cls}')
+                if tag.get('id'):
+                    found_selectors.add(f'#{tag.get('id')}')
+            log_lines.append(f"Selectors available before clicking: {sorted(found_selectors)}")
+
             results = []
 
             for idx, selector in enumerate(selectors):
@@ -138,8 +150,8 @@ if __name__ == "__main__":
     # Fetch and display data for selectors, pass out_dir
     results = fetch_data_from_urls(urls, None, out_dir=out_dir)
 
-    # Save results to CSV file, including pgm, in the timestamped folder
-    csv_file = os.path.join(out_dir, f'results_{timestamp}.csv')
+    # Save results to CSV file, including pgm, in Files/outs (not timestamped folder)
+    csv_file = os.path.join(outs_base_dir, f'results_{timestamp}.csv')
     with open(csv_file, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         writer.writerow(['pgm', 'url', 'res1', 'res2', 'res3', 'res4'])
