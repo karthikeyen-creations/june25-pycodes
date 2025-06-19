@@ -1,0 +1,57 @@
+Sub DraftEmails_FromU2toU15()
+    Dim OutlookApp As Object
+    Dim MailItem As Object
+    Dim ws As Worksheet
+    Dim i As Long
+    Dim toAddress As String
+    Dim ccAddress As String
+    Dim tempVal As String
+
+    ' Set target worksheet
+    Set ws = ThisWorkbook.Sheets("contacts")
+
+    ' Initialize Outlook
+    On Error Resume Next
+    Set OutlookApp = GetObject(, "Outlook.Application")
+    If OutlookApp Is Nothing Then
+        Set OutlookApp = CreateObject("Outlook.Application")
+    End If
+    On Error GoTo 0
+
+    ' Loop from row 2 to 15
+    For i = 2 To 15
+        ' Only process if there's body text
+        If Trim(ws.Cells(i, "U").Value) <> "" Then
+            Set MailItem = OutlookApp.CreateItem(0) ' olMailItem
+
+            ' Build To address from column F
+            tempVal = Trim(ws.Cells(i, "F").Value)
+            If tempVal <> "" Then
+                toAddress = tempVal & "@fmr.com"
+            Else
+                toAddress = ""
+            End If
+
+            ' Build CC addresses from I, L, O, R
+            ccAddress = ""
+            For Each col In Array("I", "L", "O", "R")
+                tempVal = Trim(ws.Cells(i, col).Value)
+                If tempVal <> "" Then
+                    If ccAddress <> "" Then ccAddress = ccAddress & ";"
+                    ccAddress = ccAddress & tempVal & "@fmr.com"
+                End If
+            Next col
+
+            ' Create and populate the mail
+            With MailItem
+                .To = toAddress
+                .CC = ccAddress
+                .Subject = ws.Cells(i, "V").Value
+                .Body = ws.Cells(i, "U").Value
+                .Display ' Show draft email
+            End With
+        End If
+    Next i
+
+    MsgBox "Drafts created for rows 2 to 15 in 'contacts' sheet."
+End Sub
