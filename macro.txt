@@ -1,4 +1,4 @@
-Sub DraftEmails_FromU2toU15()
+Sub SaveDraftEmailsAsEML()
     Dim OutlookApp As Object
     Dim MailItem As Object
     Dim ws As Worksheet
@@ -6,33 +6,38 @@ Sub DraftEmails_FromU2toU15()
     Dim toAddress As String
     Dim ccAddress As String
     Dim tempVal As String
+    Dim folderPath As String
+    Dim fileName As String
+    Dim subjectText As String
 
-    ' Set target worksheet
+    ' Folder to save .eml files (change this path)
+    folderPath = "C:\Users\YourName\Documents\DraftEmails\" ' <-- CHANGE THIS
+
+    ' Ensure folder path ends with "\"
+    If Right(folderPath, 1) <> "\" Then folderPath = folderPath & "\"
+
+    ' Create folder if it doesn't exist
+    If Dir(folderPath, vbDirectory) = "" Then MkDir folderPath
+
+    ' Set worksheet
     Set ws = ThisWorkbook.Sheets("contacts")
 
     ' Initialize Outlook
     On Error Resume Next
     Set OutlookApp = GetObject(, "Outlook.Application")
-    If OutlookApp Is Nothing Then
-        Set OutlookApp = CreateObject("Outlook.Application")
-    End If
+    If OutlookApp Is Nothing Then Set OutlookApp = CreateObject("Outlook.Application")
     On Error GoTo 0
 
-    ' Loop from row 2 to 15
+    ' Loop through rows 2 to 15
     For i = 2 To 15
-        ' Only process if there's body text
         If Trim(ws.Cells(i, "U").Value) <> "" Then
             Set MailItem = OutlookApp.CreateItem(0) ' olMailItem
 
-            ' Build To address from column F
+            ' Build To
             tempVal = Trim(ws.Cells(i, "F").Value)
-            If tempVal <> "" Then
-                toAddress = tempVal & "@fmr.com"
-            Else
-                toAddress = ""
-            End If
+            If tempVal <> "" Then toAddress = tempVal & "@fmr.com" Else toAddress = ""
 
-            ' Build CC addresses from I, L, O, R
+            ' Build CC
             ccAddress = ""
             For Each col In Array("I", "L", "O", "R")
                 tempVal = Trim(ws.Cells(i, col).Value)
@@ -42,16 +47,34 @@ Sub DraftEmails_FromU2toU15()
                 End If
             Next col
 
-            ' Create and populate the mail
+            ' Email content
+            subjectText = ws.Cells(i, "V").Value
             With MailItem
                 .To = toAddress
                 .CC = ccAddress
-                .Subject = ws.Cells(i, "V").Value
+                .Subject = subjectText
                 .Body = ws.Cells(i, "U").Value
-                .Display ' Show draft email
+
+                ' Save draft in Outlook
+                .Save
+
+                ' Build filename safely
+                fileName = "Email_Row" & i & "_" & CleanFileName(subjectText) & ".eml"
+                .SaveAs folderPath & fileName, 9 ' 9 = olSaveAsType = .eml
             End With
         End If
     Next i
 
-    MsgBox "Drafts created for rows 2 to 15 in 'contacts' sheet."
+    MsgBox "Draft emails saved as .eml files in: " & folderPath
 End Sub
+
+' Helper: Remove illegal characters from filename
+Function CleanFileName(s As String) As String
+    Dim invalidChars As Variant
+    Dim c As Variant
+    invalidChars = Array("\", "/", ":", "*", "?", """", "<", ">", "|")
+    For Each c In invalidChars
+        s = Replace(s, c, "_")
+    Next c
+    CleanFileName = Trim(Left(s, 100)) ' Limit length to 100 chars
+End Function
