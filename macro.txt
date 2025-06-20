@@ -1,6 +1,8 @@
 Sub SaveDraftEmailsAsEML()
     Dim OutlookApp As Object
     Dim MailItem As Object
+    Dim ns As Object
+    Dim DraftsFolder As Object
     Dim ws As Worksheet
     Dim i As Long
     Dim toAddress As String
@@ -10,13 +12,10 @@ Sub SaveDraftEmailsAsEML()
     Dim fileName As String
     Dim subjectText As String
 
-    ' Folder to save .eml files (change this path)
+    ' Folder to save .eml files
     folderPath = "C:\Users\YourName\Documents\DraftEmails\" ' <-- CHANGE THIS
 
-    ' Ensure folder path ends with "\"
     If Right(folderPath, 1) <> "\" Then folderPath = folderPath & "\"
-
-    ' Create folder if it doesn't exist
     If Dir(folderPath, vbDirectory) = "" Then MkDir folderPath
 
     ' Set worksheet
@@ -26,12 +25,14 @@ Sub SaveDraftEmailsAsEML()
     On Error Resume Next
     Set OutlookApp = GetObject(, "Outlook.Application")
     If OutlookApp Is Nothing Then Set OutlookApp = CreateObject("Outlook.Application")
+    Set ns = OutlookApp.GetNamespace("MAPI")
+    Set DraftsFolder = ns.GetDefaultFolder(16) ' olFolderDrafts
     On Error GoTo 0
 
-    ' Loop through rows 2 to 15
+    ' Loop from row 2 to 15
     For i = 2 To 15
         If Trim(ws.Cells(i, "U").Value) <> "" Then
-            Set MailItem = OutlookApp.CreateItem(0) ' olMailItem
+            Set MailItem = DraftsFolder.Items.Add ' Create draft directly in Drafts
 
             ' Build To
             tempVal = Trim(ws.Cells(i, "F").Value)
@@ -47,7 +48,7 @@ Sub SaveDraftEmailsAsEML()
                 End If
             Next col
 
-            ' Email content
+            ' Compose email
             subjectText = ws.Cells(i, "V").Value
             With MailItem
                 .To = toAddress
@@ -55,12 +56,11 @@ Sub SaveDraftEmailsAsEML()
                 .Subject = subjectText
                 .Body = ws.Cells(i, "U").Value
 
-                ' Save draft in Outlook
-                .Save
+                .Save ' Save to Drafts folder
 
-                ' Build filename safely
+                ' Use cleaned filename
                 fileName = "Email_Row" & i & "_" & CleanFileName(subjectText) & ".eml"
-                .SaveAs folderPath & fileName, 9 ' 9 = olSaveAsType = .eml
+                .SaveAs folderPath & fileName, 9 ' Save as .eml
             End With
         End If
     Next i
@@ -76,5 +76,5 @@ Function CleanFileName(s As String) As String
     For Each c In invalidChars
         s = Replace(s, c, "_")
     Next c
-    CleanFileName = Trim(Left(s, 100)) ' Limit length to 100 chars
+    CleanFileName = Trim(Left(s, 100))
 End Function
